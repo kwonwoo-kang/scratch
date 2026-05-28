@@ -22,6 +22,10 @@
   "menuColor": "default",
   "menuAccent": "subtle",
   "registries": {
+    "@unlumen-ui": {
+      "url": "https://ui.unlumen.com/r/{name}.json",
+      "headers": {}
+    },
     "@magicui": "https://magicui.design/r/{name}",
     "@aceternity": "https://ui.aceternity.com/registry/{name}.json",
     "@animate-ui": "https://animate-ui.com/r/{name}.json",

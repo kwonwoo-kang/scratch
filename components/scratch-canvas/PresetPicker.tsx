@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import { Tilt } from '@/components/unlumen-ui/tilt'
 import { PRESETS, drawPreset } from '@/lib/presets'
 import type { CanvasSize, ColorLayerDataURL, LayerMode, PresetId } from '@/types/scratch-canvas'
 
@@ -72,29 +73,30 @@ export default function PresetPicker({ selectedSize, onScratchStart, onSwitchMod
         {PRESETS.map((preset) => {
           const isSelected = selectedPreset === preset.id
           return (
-            <button
-              key={preset.id}
-              type="button"
-              data-preset-card
-              data-selected={isSelected}
-              onClick={() => setSelectedPreset(preset.id)}
-              className={cn(
-                'rounded-xl border-2 p-3 flex flex-col items-center gap-2 transition-colors',
-                isSelected
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border bg-card hover:border-primary/40'
-              )}
-            >
-              <canvas
-                ref={(el) => {
-                  if (el) previewRefs.current.set(preset.id, el)
-                }}
-                width={PREVIEW_SIZE}
-                height={PREVIEW_SIZE}
-                className="rounded"
-              />
-              <span className="text-xs font-medium text-foreground">{preset.label}</span>
-            </button>
+            <Tilt key={preset.id} rotationFactor={8} className="rounded-xl">
+              <button
+                type="button"
+                data-preset-card
+                data-selected={isSelected}
+                onClick={() => setSelectedPreset(preset.id)}
+                className={cn(
+                  'w-full rounded-xl border-2 p-3 flex flex-col items-center gap-2 transition-colors',
+                  isSelected
+                    ? 'border-primary bg-primary/5'
+                    : 'border-border bg-card hover:border-primary/40'
+                )}
+              >
+                <canvas
+                  ref={(el) => {
+                    if (el) previewRefs.current.set(preset.id, el)
+                  }}
+                  width={PREVIEW_SIZE}
+                  height={PREVIEW_SIZE}
+                  className="rounded"
+                />
+                <span className="text-xs font-medium text-foreground">{preset.label}</span>
+              </button>
+            </Tilt>
           )
         })}
       </div>
