@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import type { AppStep, CanvasSize, LayerMode, ColorLayerDataURL } from '@/types/scratch-canvas'
 import SizePicker from '@/components/scratch-canvas/SizePicker'
+import PresetPicker from '@/components/scratch-canvas/PresetPicker'
+import PaintCanvas from '@/components/scratch-canvas/PaintCanvas'
+import ScratchCanvas from '@/components/scratch-canvas/ScratchCanvas'
 
 export default function ScratchCanvasPage() {
   const [step, setStep] = useState<AppStep>('size-pick')
@@ -24,6 +27,7 @@ export default function ScratchCanvasPage() {
     setStep('size-pick')
     setCanvasSize(null)
     setColorDataURL('')
+    setLayerMode('preset')
   }
 
   return (
@@ -31,17 +35,30 @@ export default function ScratchCanvasPage() {
       {step === 'size-pick' && (
         <SizePicker onSelect={handleSizeSelect} />
       )}
-      {step === 'layer-pick' && canvasSize && (
-        <div>
-          {/* PresetPicker / PaintCanvas — wired in Task 3 & 4 */}
-          <p className="p-6 text-muted-foreground">색상 레이어 준비 (Task 3-4에서 연결)</p>
-        </div>
+
+      {step === 'layer-pick' && canvasSize && layerMode === 'preset' && (
+        <PresetPicker
+          selectedSize={canvasSize}
+          onScratchStart={handleScratchStart}
+          onSwitchMode={(mode) => setLayerMode(mode)}
+        />
       )}
+
+      {step === 'layer-pick' && canvasSize && layerMode === 'paint' && (
+        <PaintCanvas
+          selectedSize={canvasSize}
+          onScratchStart={handleScratchStart}
+          onSwitchMode={(mode) => setLayerMode(mode)}
+        />
+      )}
+
       {step === 'scratch' && canvasSize && (
-        <div>
-          {/* ScratchCanvas — wired in Task 2 */}
-          <p className="p-6 text-muted-foreground">스크래치 (Task 2에서 연결)</p>
-        </div>
+        <ScratchCanvas
+          width={canvasSize.width}
+          height={canvasSize.height}
+          colorDataURL={colorDataURL}
+          onReset={handleReset}
+        />
       )}
     </main>
   )
