@@ -2,13 +2,9 @@
 
 import { useCallback, useEffect, useRef } from 'react'
 import { getAudioContext, decodeAudioData } from '@/lib/sound-engine'
-import { scratch001Sound } from '@/lib/scratch-001'
-import { scratch002Sound } from '@/lib/scratch-002'
-import { scratch003Sound } from '@/lib/scratch-003'
-import { scratch004Sound } from '@/lib/scratch-004'
-import { scratch005Sound } from '@/lib/scratch-005'
+import { drawKnife3Sound } from '@/lib/draw-knife-3'
 
-const SOUNDS = [scratch001Sound, scratch002Sound, scratch003Sound, scratch004Sound, scratch005Sound]
+const SOUNDS = [drawKnife3Sound]
 const TICK_INTERVAL_MS = 60
 const MIN_PITCH = 0.85
 const MAX_PITCH = 1.15

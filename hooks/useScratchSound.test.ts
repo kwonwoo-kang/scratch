@@ -34,12 +34,7 @@ vi.mock('@/lib/sound-engine', () => ({
   decodeAudioData: vi.fn().mockResolvedValue({ duration: 0.5 } as AudioBuffer),
 }))
 
-// Stub all 5 scratch sound imports
-vi.mock('@/lib/scratch-001', () => ({ scratch001Sound: { name: 'scratch-001', dataUri: 'data:audio/mpeg;base64,stub1' } }))
-vi.mock('@/lib/scratch-002', () => ({ scratch002Sound: { name: 'scratch-002', dataUri: 'data:audio/mpeg;base64,stub2' } }))
-vi.mock('@/lib/scratch-003', () => ({ scratch003Sound: { name: 'scratch-003', dataUri: 'data:audio/mpeg;base64,stub3' } }))
-vi.mock('@/lib/scratch-004', () => ({ scratch004Sound: { name: 'scratch-004', dataUri: 'data:audio/mpeg;base64,stub4' } }))
-vi.mock('@/lib/scratch-005', () => ({ scratch005Sound: { name: 'scratch-005', dataUri: 'data:audio/mpeg;base64,stub5' } }))
+vi.mock('@/lib/draw-knife-3', () => ({ drawKnife3Sound: { name: 'draw-knife-3', dataUri: 'data:audio/mpeg;base64,stub' } }))
 
 import { decodeAudioData, getAudioContext } from '@/lib/sound-engine'
 
@@ -57,19 +52,18 @@ describe('useScratchSound', () => {
     expect(decodeAudioData).not.toHaveBeenCalled()
   })
 
-  it('decodes all 5 sounds when enabled', async () => {
+  it('decodes the sound when enabled', async () => {
     renderHook(() => useScratchSound(true))
     await vi.waitFor(() => {
-      expect(decodeAudioData).toHaveBeenCalledTimes(5)
+      expect(decodeAudioData).toHaveBeenCalledTimes(1)
     })
   })
 
   it('resumes suspended AudioContext on start()', async () => {
     mockCtx.state = 'suspended'
     const { result } = renderHook(() => useScratchSound(true))
-    await vi.waitFor(() => expect(decodeAudioData).toHaveBeenCalledTimes(5))
+    await vi.waitFor(() => expect(decodeAudioData).toHaveBeenCalledTimes(1))
 
-    // Manually set buffers by resolving the promise
     act(() => { result.current.start() })
     expect(mockCtx.resume).toHaveBeenCalled()
   })
@@ -77,7 +71,7 @@ describe('useScratchSound', () => {
   it('throttles tick() to TICK_INTERVAL_MS', async () => {
     vi.useFakeTimers()
     const { result } = renderHook(() => useScratchSound(true))
-    await vi.waitFor(() => expect(decodeAudioData).toHaveBeenCalledTimes(5))
+    await vi.waitFor(() => expect(decodeAudioData).toHaveBeenCalledTimes(1))
 
     const createSourceSpy = mockCtx.createBufferSource
     // Force buffers to be populated
