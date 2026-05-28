@@ -2,6 +2,23 @@ import { render, screen, fireEvent } from '@testing-library/react'
 import { describe, it, expect, vi } from 'vitest'
 import ScratchCanvas from './ScratchCanvas'
 
+vi.mock('@/lib/sound-engine', () => ({
+  getAudioContext: vi.fn(() => ({
+    state: 'running',
+    currentTime: 0,
+    resume: vi.fn(),
+    createBufferSource: vi.fn(() => ({
+      buffer: null, playbackRate: { value: 1 }, connect: vi.fn(), start: vi.fn(), stop: vi.fn(), onended: null,
+    })),
+    createGain: vi.fn(() => ({
+      gain: { value: 1, setValueAtTime: vi.fn(), linearRampToValueAtTime: vi.fn() },
+      connect: vi.fn(),
+    })),
+    destination: {},
+  })),
+  decodeAudioData: vi.fn().mockResolvedValue({ duration: 0.5 }),
+}))
+
 const defaultProps = {
   width: 800,
   height: 800,
@@ -34,6 +51,14 @@ describe('ScratchCanvas', () => {
   it('has no back-to-coloring button (one-way flow invariant)', () => {
     render(<ScratchCanvas {...defaultProps} />)
     expect(screen.queryByRole('button', { name: /색칠|프리셋|직접 칠하기/i })).not.toBeInTheDocument()
+  })
+
+  it('renders sound toggle button and toggles aria-label', () => {
+    render(<ScratchCanvas {...defaultProps} />)
+    const toggle = screen.getByRole('button', { name: /효과음 끄기/i })
+    expect(toggle).toBeInTheDocument()
+    fireEvent.click(toggle)
+    expect(screen.getByRole('button', { name: /효과음 켜기/i })).toBeInTheDocument()
   })
 
   describe('처음부터 dialog', () => {

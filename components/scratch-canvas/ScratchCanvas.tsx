@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -11,6 +12,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { useScratchCanvas } from '@/hooks/useScratchCanvas'
+import { useScratchSound } from '@/hooks/useScratchSound'
 import { exportAsPng } from '@/lib/exportCanvas'
 import type { ScratchBrushSize, ColorLayerDataURL } from '@/types/scratch-canvas'
 
@@ -24,7 +26,13 @@ interface ScratchCanvasProps {
 }
 
 export default function ScratchCanvas({ width, height, colorDataURL, onReset }: ScratchCanvasProps) {
-  const { colorCanvasRef, overlayCanvasRef, brushSize, setBrushSize, handlePointerDown, handlePointerMove, handlePointerUp, handlePointerCancel, resetOverlay } = useScratchCanvas()
+  const [soundEnabled, setSoundEnabled] = useState(true)
+  const sound = useScratchSound(soundEnabled)
+  const { colorCanvasRef, overlayCanvasRef, brushSize, setBrushSize, handlePointerDown, handlePointerMove, handlePointerUp, handlePointerCancel, resetOverlay } = useScratchCanvas({
+    onStrokeStart: sound.start,
+    onStrokeTick: sound.tick,
+    onStrokeEnd: sound.stop,
+  })
   const [showResetDialog, setShowResetDialog] = useState(false)
   const [showRepaintDialog, setShowRepaintDialog] = useState(false)
 
@@ -60,7 +68,7 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
   return (
     <div className="flex flex-col gap-4 p-4 items-center">
       {/* Action buttons */}
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <Button
           variant="outline"
           onClick={() => {
@@ -75,6 +83,14 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
         </Button>
         <Button variant="destructive" onClick={() => setShowResetDialog(true)}>
           처음부터
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setSoundEnabled((v) => !v)}
+          aria-label={soundEnabled ? '효과음 끄기' : '효과음 켜기'}
+        >
+          {soundEnabled ? <Volume2 /> : <VolumeX />}
         </Button>
       </div>
 

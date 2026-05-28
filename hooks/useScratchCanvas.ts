@@ -3,7 +3,14 @@ import type { ScratchBrushSize } from '@/types/scratch-canvas'
 
 type PointerPos = { clientX: number; clientY: number }
 
-export function useScratchCanvas() {
+interface UseScratchCanvasOpts {
+  onStrokeStart?: () => void
+  onStrokeTick?: () => void
+  onStrokeEnd?: () => void
+}
+
+export function useScratchCanvas(opts: UseScratchCanvasOpts = {}) {
+  const { onStrokeStart, onStrokeTick, onStrokeEnd } = opts
   const colorCanvasRef = useRef<HTMLCanvasElement>(null)
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
   const [brushSize, setBrushSize] = useState<ScratchBrushSize>(4)
@@ -35,8 +42,9 @@ export function useScratchCanvas() {
         ctx.fill()
       }
       lastPos.current = { x, y }
+      onStrokeTick?.()
     },
-    [brushSize]
+    [brushSize, onStrokeTick]
   )
 
   function toCanvasCoords(e: React.PointerEvent<HTMLCanvasElement>) {
@@ -66,6 +74,7 @@ export function useScratchCanvas() {
         lastPos.current = null
         const { x, y } = toCanvasCoords(e)
         scratchStroke(x, y)
+        onStrokeStart?.()
       } else if (activePointers.current.size === 2) {
         // cancel ongoing stroke
         isDrawing.current = false
@@ -74,6 +83,7 @@ export function useScratchCanvas() {
           try { e.currentTarget.releasePointerCapture(drawingPointerId.current) } catch {}
           drawingPointerId.current = null
         }
+        onStrokeEnd?.()
         panLastCentroidY.current = getCentroidY(activePointers.current)
       }
       // 3+ fingers: just tracked in Map, pan uses first two
@@ -109,13 +119,15 @@ export function useScratchCanvas() {
       lastPos.current = null
       drawingPointerId.current = null
       panLastCentroidY.current = null
+      onStrokeEnd?.()
     } else {
       // transitioned from 2→1: stop pan, do not auto-resume drawing
       panLastCentroidY.current = null
       isDrawing.current = false
       lastPos.current = null
+      onStrokeEnd?.()
     }
-  }, [])
+  }, [onStrokeEnd])
 
   const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
     activePointers.current.delete(e.pointerId)
@@ -125,12 +137,14 @@ export function useScratchCanvas() {
       lastPos.current = null
       drawingPointerId.current = null
       panLastCentroidY.current = null
+      onStrokeEnd?.()
     } else {
       panLastCentroidY.current = null
       isDrawing.current = false
       lastPos.current = null
+      onStrokeEnd?.()
     }
-  }, [])
+  }, [onStrokeEnd])
 
   const resetOverlay = useCallback(() => {
     const canvas = overlayCanvasRef.current
