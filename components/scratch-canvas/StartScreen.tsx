@@ -19,8 +19,8 @@ export default function StartScreen({ onStart }: StartScreenProps) {
 
       <ol className="flex flex-col gap-2 text-sm text-muted-foreground text-left list-none">
         <li>1. 캔버스 크기를 고르세요</li>
-        <li>2. 배경 색을 칠하세요</li>
-        <li>3. 손가락으로 긁어 그림을 드러내세요</li>
+        <li>2. 배경 색을 고르거나 직접 색칠하세요</li>
+        <li>3. 원하시는대로 그림을 그리세요</li>
       </ol>
 
       <Button size="lg" onClick={onStart}>
