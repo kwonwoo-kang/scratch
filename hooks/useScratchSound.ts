@@ -29,6 +29,8 @@ export function useScratchSound(enabled: boolean) {
   const fireSound = useCallback(() => {
     const buffers = buffersRef.current
     if (!buffers.length) return
+    // Don't interrupt — wait for current playback to finish
+    if (activeSourceRef.current !== null) return
 
     const ctx = getAudioContext()
     const buffer = buffers[Math.floor(Math.random() * buffers.length)]
