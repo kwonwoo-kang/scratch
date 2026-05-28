@@ -1,7 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-import { cn } from '@/lib/utils'
+import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -27,7 +26,6 @@ interface ScratchCanvasProps {
 export default function ScratchCanvas({ width, height, colorDataURL, onReset }: ScratchCanvasProps) {
   const { colorCanvasRef, overlayCanvasRef, brushSize, setBrushSize, handlePointerDown, handlePointerMove, handlePointerUp } = useScratchCanvas()
   const [showResetDialog, setShowResetDialog] = useState(false)
-  const touchMoveListenerRef = useRef<{ el: HTMLCanvasElement; handler: (e: TouchEvent) => void } | null>(null)
 
   useEffect(() => {
     const colorCanvas = colorCanvasRef.current
@@ -40,7 +38,7 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
       img.onload = () => ctx.drawImage(img, 0, 0, width, height)
       img.src = colorDataURL
     } else {
-      // fallback demo gradient
+      // demo gradient shown when no color layer is provided
       const grad = ctx.createLinearGradient(0, 0, width, 0)
       grad.addColorStop(0, '#e63946')
       grad.addColorStop(0.5, '#a8d5ba')
@@ -58,39 +56,6 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
     ctx.fillStyle = '#000000'
     ctx.fillRect(0, 0, width, height)
   }, [width, height, overlayCanvasRef])
-
-  // Passive touch listener for mobile scratch support
-  useEffect(() => {
-    const canvas = overlayCanvasRef.current
-    if (!canvas) return
-
-    const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault()
-      const touch = e.touches[0]
-      const rect = canvas.getBoundingClientRect()
-      const scaleX = width / rect.width
-      const scaleY = height / rect.height
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-      ctx.globalCompositeOperation = 'destination-out'
-      ctx.beginPath()
-      ctx.arc(
-        (touch.clientX - rect.left) * scaleX,
-        (touch.clientY - rect.top) * scaleY,
-        brushSize,
-        0,
-        Math.PI * 2
-      )
-      ctx.fill()
-    }
-
-    canvas.addEventListener('touchmove', handleTouchMove, { passive: false })
-    touchMoveListenerRef.current = { el: canvas, handler: handleTouchMove }
-
-    return () => {
-      canvas.removeEventListener('touchmove', handleTouchMove)
-    }
-  }, [brushSize, width, height, overlayCanvasRef])
 
   const scale = Math.min(1, 800 / Math.max(width, height))
   const displayWidth = Math.round(width * scale)
@@ -124,11 +89,16 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
           height={height}
           style={{ position: 'absolute', top: 0, left: 0, width: displayWidth, height: displayHeight }}
         />
+        {/* touch-action: none lets pointer events fire for both mouse and touch */}
         <canvas
           ref={overlayCanvasRef}
           width={width}
           height={height}
-          style={{ position: 'absolute', top: 0, left: 0, width: displayWidth, height: displayHeight, cursor: 'crosshair' }}
+          style={{
+            position: 'absolute', top: 0, left: 0,
+            width: displayWidth, height: displayHeight,
+            cursor: 'crosshair', touchAction: 'none',
+          }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}

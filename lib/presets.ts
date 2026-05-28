@@ -73,28 +73,31 @@ export function drawPreset(
         { x: 0.8, y: 0.7, r: 0.22, color: '#a8d5ba' },
         { x: 0.5, y: 0.9, r: 0.15, color: '#06a77d' },
       ]
+      const savedAlpha = ctx.globalAlpha
       for (const p of patches) {
         const grad = ctx.createRadialGradient(
           p.x * width, p.y * height, 0,
           p.x * width, p.y * height, p.r * Math.max(width, height)
         )
-        grad.addColorStop(0, p.color + 'cc')
-        grad.addColorStop(1, p.color + '00')
+        grad.addColorStop(0, p.color)
+        grad.addColorStop(1, 'transparent')
+        ctx.globalAlpha = 0.7
         ctx.fillStyle = grad
         ctx.fillRect(0, 0, width, height)
       }
+      ctx.globalAlpha = savedAlpha
       break
     }
     case 'pastel': {
-      // Pastel patchwork: pink, mint, light yellow blocks
+      // Pastel patchwork: true pastel pink, mint, light yellow, sky blue
       const patches = [
-        { color: '#f72585', x: 0, y: 0, w: 0.5, h: 0.5 },
-        { color: '#a8d5ba', x: 0.5, y: 0, w: 0.5, h: 0.5 },
-        { color: '#ffd166', x: 0, y: 0.5, w: 0.5, h: 0.5 },
-        { color: '#90e0ef', x: 0.5, y: 0.5, w: 0.5, h: 0.5 },
+        { color: '#f9c8d4', x: 0, y: 0, w: 0.5, h: 0.5 },
+        { color: '#b5ead7', x: 0.5, y: 0, w: 0.5, h: 0.5 },
+        { color: '#fff3b0', x: 0, y: 0.5, w: 0.5, h: 0.5 },
+        { color: '#c7e9f0', x: 0.5, y: 0.5, w: 0.5, h: 0.5 },
       ]
       for (const p of patches) {
-        ctx.fillStyle = p.color + 'bb'
+        ctx.fillStyle = p.color
         ctx.fillRect(p.x * width, p.y * height, p.w * width, p.h * height)
       }
       break

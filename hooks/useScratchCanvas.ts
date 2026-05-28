@@ -15,17 +15,28 @@ export function useScratchCanvas() {
       if (!ctx) return
       ctx.globalCompositeOperation = 'destination-out'
       ctx.beginPath()
-      ctx.arc(x, y, brushSize, 0, Math.PI * 2)
+      // brushSize is diameter — radius is brushSize / 2
+      ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2)
       ctx.fill()
     },
     [brushSize]
   )
 
+  function toCanvasCoords(e: React.PointerEvent<HTMLCanvasElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const scaleX = e.currentTarget.width / rect.width
+    const scaleY = e.currentTarget.height / rect.height
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    }
+  }
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       isDrawing.current = true
-      const rect = e.currentTarget.getBoundingClientRect()
-      scratch(e.clientX - rect.left, e.clientY - rect.top)
+      const { x, y } = toCanvasCoords(e)
+      scratch(x, y)
     },
     [scratch]
   )
@@ -33,8 +44,8 @@ export function useScratchCanvas() {
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       if (!isDrawing.current) return
-      const rect = e.currentTarget.getBoundingClientRect()
-      scratch(e.clientX - rect.left, e.clientY - rect.top)
+      const { x, y } = toCanvasCoords(e)
+      scratch(x, y)
     },
     [scratch]
   )

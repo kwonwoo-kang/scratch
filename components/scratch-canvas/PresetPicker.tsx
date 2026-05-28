@@ -72,13 +72,14 @@ export default function PresetPicker({ selectedSize, onScratchStart, onSwitchMod
         {PRESETS.map((preset) => {
           const isSelected = selectedPreset === preset.id
           return (
-            <div
+            <button
               key={preset.id}
+              type="button"
               data-preset-card
               data-selected={isSelected}
               onClick={() => setSelectedPreset(preset.id)}
               className={cn(
-                'cursor-pointer rounded-xl border-2 p-3 flex flex-col items-center gap-2 transition-colors',
+                'rounded-xl border-2 p-3 flex flex-col items-center gap-2 transition-colors',
                 isSelected
                   ? 'border-primary bg-primary/5'
                   : 'border-border bg-card hover:border-primary/40'
@@ -93,7 +94,7 @@ export default function PresetPicker({ selectedSize, onScratchStart, onSwitchMod
                 className="rounded"
               />
               <span className="text-xs font-medium text-foreground">{preset.label}</span>
-            </div>
+            </button>
           )
         })}
       </div>

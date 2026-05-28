@@ -28,17 +28,18 @@ export default function SizePicker({ onSelect }: SizePickerProps) {
   return (
     <div className="flex flex-col gap-6 p-6 max-w-2xl mx-auto">
       <h1 className="text-2xl font-semibold text-foreground">캔버스 크기 선택</h1>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3" role="group" aria-label="캔버스 크기">
         {CANVAS_SIZES.map((size) => {
           const isSelected = selected === size.label
           return (
-            <div
+            <button
               key={size.label}
+              type="button"
               data-size-card
               data-selected={isSelected}
               onClick={() => handleClick(size)}
               className={cn(
-                'cursor-pointer rounded-xl border-2 p-4 flex flex-col gap-1 transition-colors',
+                'rounded-xl border-2 p-4 flex flex-col gap-1 transition-colors text-left',
                 isSelected
                   ? 'border-primary bg-primary/5'
                   : 'border-border bg-card hover:border-primary/40'
@@ -48,7 +49,7 @@ export default function SizePicker({ onSelect }: SizePickerProps) {
               <span className="text-xs text-muted-foreground">
                 {size.width} × {size.height}
               </span>
-            </div>
+            </button>
           )
         })}
       </div>

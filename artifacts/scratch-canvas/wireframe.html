@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wireframe: Scratch Canvas</title>
+<script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --w-bg: #f5f5f5;
+    --w-border: #ccc;
+    --w-text: #555;
+    --w-muted: #aaa;
+    --w-fill: #eee;
+  }
+
+  * {
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    color: var(--w-text);
+  }
+
+  body { background: var(--w-bg); }
+
+  nav { position: sticky; top: 0; z-index: 40; background: var(--w-bg); border-bottom: 1px solid var(--w-border); }
+  nav button { cursor: pointer; font-size: 12px; }
+  nav button:hover { background: var(--w-fill); border-radius: 4px; }
+  nav button.active { font-weight: bold; border-bottom: 2px solid var(--w-text); }
+
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  .vp-toggle button {
+    font-size: 12px; padding: 2px 8px;
+    border: 1px solid var(--w-border); cursor: pointer; background: white;
+  }
+  .vp-toggle button:first-child { border-radius: 4px 0 0 4px; }
+  .vp-toggle button:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+  .vp-toggle button.active { background: var(--w-text); color: white; }
+
+  body.viewport-mobile .screen-content {
+    max-width: 375px !important;
+    margin: 24px auto !important;
+    border: 2px solid var(--w-border);
+    border-radius: 24px;
+    min-height: 667px;
+    background: white;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+    padding: 28px 16px 24px !important;
+  }
+
+  .screen-notes {
+    background: #fffde7;
+    border-left: 3px solid #ffd54f;
+    padding: 12px 16px;
+    margin-top: 20px;
+    font-size: 12px;
+    border-radius: 0 4px 4px 0;
+  }
+  .screen-notes summary { cursor: pointer; font-weight: bold; font-size: 11px; color: #b0a050; text-transform: uppercase; letter-spacing: 0.05em; }
+  .screen-notes ul { margin: 6px 0 0 14px; padding: 0; color: #777; }
+  .screen-notes li { margin: 3px 0; }
+
+  /* Wireframe components */
+  .w-btn {
+    background: var(--w-text);
+    padding: 10px 20px;
+    border-radius: 6px;
+    text-align: center;
+    cursor: pointer;
+    display: block;
+  }
+  .w-btn span, .w-btn i { color: white !important; }
+
+  .w-btn-ghost {
+    border: 1px solid var(--w-border);
+    padding: 8px 14px;
+    border-radius: 6px;
+    background: white;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .w-tab-bar { display: flex; border-bottom: 1px solid var(--w-border); margin-bottom: 16px; }
+  .w-tab { padding: 8px 14px; font-size: 13px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .w-tab.active { border-bottom: 2px solid var(--w-text); font-weight: bold; }
+
+  .w-card {
+    border: 1px solid var(--w-border);
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    padding: 12px;
+    transition: border-color 0.1s;
+  }
+  .w-card.selected { border: 2px solid var(--w-text); }
+
+  .w-swatch {
+    border: 1px solid var(--w-border);
+    border-radius: 4px;
+    background: var(--w-fill);
+  }
+  .w-swatch.active-color { border: 2px solid var(--w-text); }
+
+  .w-canvas-white {
+    background: white;
+    border: 1px dashed var(--w-border);
+    border-radius: 6px;
+  }
+  .w-canvas-dark {
+    background: var(--w-text);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .w-reveal {
+    position: absolute;
+    background: var(--w-fill);
+    border-radius: 9999px;
+  }
+
+  .w-size-thumb {
+    background: var(--w-fill);
+    border: 1px solid var(--w-border);
+    display: inline-block;
+  }
+
+  .w-size-opt {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; padding: 5px 8px;
+    border: 1px solid var(--w-border); border-radius: 6px;
+    cursor: pointer; background: white; min-width: 38px; height: 46px;
+  }
+  .w-size-opt.selected {
+    border: 2px solid var(--w-text); background: var(--w-fill);
+  }
+  .w-size-dot {
+    border-radius: 9999px; background: var(--w-text); margin: 0 auto;
+  }
+
+  .w-slider-track {
+    flex: 1; height: 4px; background: var(--w-border); border-radius: 2px; position: relative;
+  }
+  .w-slider-thumb {
+    position: absolute; top: -6px;
+    width: 16px; height: 16px;
+    border-radius: 9999px;
+    background: var(--w-text);
+  }
+
+  .w-dialog-backdrop {
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.25);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 10;
+  }
+  .w-dialog {
+    background: white;
+    border: 1px solid var(--w-border);
+    border-radius: 10px;
+    padding: 20px;
+    width: 260px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
+</style>
+</head>
+<body class="p-0 m-0 viewport-mobile">
+
+<nav class="flex items-center gap-1 px-4 py-2 flex-wrap">
+  <span class="text-xs mr-2" style="color:var(--w-muted)">wireframe</span>
+  <button id="nav-0" onclick="show(0)" class="px-2 py-1">① 캔버스 크기</button>
+  <button id="nav-1" onclick="show(1)" class="px-2 py-1">② 프리셋 선택</button>
+  <button id="nav-2" onclick="show(2)" class="px-2 py-1">② 직접 칠하기</button>
+  <button id="nav-3" onclick="show(3)" class="px-2 py-1">③ 스크래치</button>
+  <button id="nav-4" onclick="show(4)" class="px-2 py-1">③ 새로 시작 확인</button>
+  <div class="vp-toggle flex ml-auto">
+    <button id="vp-desktop" onclick="setViewport('desktop')">Desktop</button>
+    <button id="vp-mobile" onclick="setViewport('mobile')" class="active">Mobile</button>
+  </div>
+</nav>
+
+
+<!-- ① 캔버스 크기 선택 -->
+<div id="screen-0" class="screen" data-scenario="scenario-1">
+  <div class="screen-content @container max-w-4xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-4" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      캔버스 크기 선택
+    </h2>
+
+    <p class="text-sm font-bold mb-1">캔버스 크기를 선택하세요</p>
+    <p class="text-xs mb-4" style="color:var(--w-muted)">PNG 저장 시 선택한 픽셀 크기로 저장됩니다</p>
+
+    <!-- 6 size cards: 2-col mobile, 3-col desktop -->
+    <div class="grid grid-cols-2 @md:grid-cols-3 gap-3 mb-6">
+
+      <!-- selected state -->
+      <div class="w-card selected flex flex-col items-center gap-2">
+        <div class="w-size-thumb" style="width:36px;height:36px;"></div>
+        <div class="text-center">
+          <div class="text-xs font-bold">소형 정사각</div>
+          <div class="text-xs" style="color:var(--w-muted)">600 × 600</div>
+        </div>
+      </div>
+
+      <div class="w-card flex flex-col items-center gap-2">
+        <div class="w-size-thumb" style="width:44px;height:44px;"></div>
+        <div class="text-center">
+          <div class="text-xs font-bold">중형 정사각</div>
+          <div class="text-xs" style="color:var(--w-muted)">800 × 800</div>
+        </div>
+      </div>
+
+      <div class="w-card flex flex-col items-center gap-2">
+        <div class="w-size-thumb" style="width:52px;height:52px;"></div>
+        <div class="text-center">
+          <div class="text-xs font-bold">대형 정사각</div>
+          <div class="text-xs" style="color:var(--w-muted)">1200 × 1200</div>
+        </div>
+      </div>
+
+      <div class="w-card flex flex-col items-center gap-2">
+        <div class="w-size-thumb" style="width:56px;height:37px;"></div>
+        <div class="text-center">
+          <div class="text-xs font-bold">가로형</div>
+          <div class="text-xs" style="color:var(--w-muted)">1200 × 800</div>
+        </div>
+      </div>
+
+      <div class="w-card flex flex-col items-center gap-2">
+        <div class="w-size-thumb" style="width:37px;height:56px;"></div>
+        <div class="text-center">
+          <div class="text-xs font-bold">세로형</div>
+          <div class="text-xs" style="color:var(--w-muted)">800 × 1200</div>
+        </div>
+      </div>
+
+      <div class="w-card flex flex-col items-center gap-2">
+        <div class="w-size-thumb" style="width:64px;height:36px;"></div>
+        <div class="text-center">
+          <div class="text-xs font-bold">와이드</div>
+          <div class="text-xs" style="color:var(--w-muted)">1600 × 900</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="w-btn"><span class="text-sm font-bold">다음 →</span></div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <ul>
+          <li>트리거: 앱 최초 진입 시 표시</li>
+          <li>인터랙션: 카드 클릭 → 선택 강조(굵은 테두리). "다음" 버튼은 하나 선택 시 활성화</li>
+          <li>전환: "다음" 클릭 → 색상 레이어 준비 화면으로 이동</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ② 색상 레이어 — 프리셋 선택 -->
+<div id="screen-1" class="screen" data-scenario="scenario-2">
+  <div class="screen-content @container max-w-4xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-4" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      색상 레이어 준비
+    </h2>
+
+    <!-- Selected canvas size badge -->
+    <div class="flex items-center gap-2 mb-4">
+      <span class="text-xs px-2 py-1 rounded" style="background:var(--w-fill); border:1px solid var(--w-border);">800 × 800</span>
+      <span class="text-xs" style="color:var(--w-muted)">선택된 캔버스 크기</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="w-tab-bar">
+      <div class="w-tab active">프리셋 선택</div>
+      <div class="w-tab">직접 칠하기</div>
+    </div>
+
+    <p class="text-xs mb-3" style="color:var(--w-muted)">긁으면 나올 색상 테마를 선택하세요</p>
+
+    <!-- 6 preset cards: 2-col mobile, 3-col desktop -->
+    <div class="grid grid-cols-2 @md:grid-cols-3 gap-3 mb-5">
+
+      <!-- 무지개 - selected -->
+      <div class="w-card selected flex flex-col gap-2">
+        <div class="w-canvas-white w-full rounded" style="height:54px; display:flex; align-items:center; justify-content:center;">
+          <span class="text-xs" style="color:var(--w-muted)">← 스펙트럼 →</span>
+        </div>
+        <div class="text-xs font-bold text-center">무지개</div>
+      </div>
+
+      <div class="w-card flex flex-col gap-2">
+        <div class="w-canvas-white w-full rounded" style="height:54px; display:flex; align-items:center; justify-content:center;">
+          <span class="text-xs" style="color:var(--w-muted)">남색→주황</span>
+        </div>
+        <div class="text-xs font-bold text-center">야경</div>
+      </div>
+
+      <div class="w-card flex flex-col gap-2">
+        <div class="w-canvas-white w-full rounded" style="height:54px; display:flex; align-items:center; justify-content:center;">
+          <span class="text-xs" style="color:var(--w-muted)">노랑→붉은</span>
+        </div>
+        <div class="text-xs font-bold text-center">황금빛 낙조</div>
+      </div>
+
+      <div class="w-card flex flex-col gap-2">
+        <div class="w-canvas-white w-full rounded" style="height:54px; display:flex; align-items:center; justify-content:center;">
+          <span class="text-xs" style="color:var(--w-muted)">진청→연분홍</span>
+        </div>
+        <div class="text-xs font-bold text-center">새벽</div>
+      </div>
+
+      <div class="w-card flex flex-col gap-2">
+        <div class="w-canvas-white w-full rounded" style="height:54px; display:flex; align-items:center; justify-content:center;">
+          <span class="text-xs" style="color:var(--w-muted)">초록 패턴</span>
+        </div>
+        <div class="text-xs font-bold text-center">숲</div>
+      </div>
+
+      <div class="w-card flex flex-col gap-2">
+        <div class="w-canvas-white w-full rounded" style="height:54px; display:flex; align-items:center; justify-content:center;">
+          <span class="text-xs" style="color:var(--w-muted)">파스텔 패치</span>
+        </div>
+        <div class="text-xs font-bold text-center">파스텔</div>
+      </div>
+
+    </div>
+
+    <div class="w-btn"><span class="text-sm font-bold">스크래치 시작 →</span></div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <ul>
+          <li>트리거: 캔버스 크기 선택 후 진입 (기본 탭은 프리셋)</li>
+          <li>인터랙션: 카드 클릭 → 선택 강조. "직접 칠하기" 탭 클릭 → 화면 전환</li>
+          <li>전환: "스크래치 시작" 클릭(프리셋 1개 선택 후 활성화) → 스크래치 화면</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ② 색상 레이어 — 직접 칠하기 -->
+<div id="screen-2" class="screen" data-scenario="scenario-3">
+  <div class="screen-content @container max-w-4xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-4" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      색상 레이어 준비
+    </h2>
+
+    <div class="flex items-center gap-2 mb-4">
+      <span class="text-xs px-2 py-1 rounded" style="background:var(--w-fill); border:1px solid var(--w-border);">800 × 800</span>
+      <span class="text-xs" style="color:var(--w-muted)">선택된 캔버스 크기</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="w-tab-bar">
+      <div class="w-tab">프리셋 선택</div>
+      <div class="w-tab active">직접 칠하기</div>
+    </div>
+
+    <!-- Color palette: 16 colors in 2 rows of 8 (mobile) / 1 row of 16 (desktop) -->
+    <div class="mb-3">
+      <p class="text-xs mb-2" style="color:var(--w-muted)">크레파스 색상 선택</p>
+      <div class="grid grid-cols-8 @md:grid-cols-16 gap-1 mb-1">
+        <div class="w-swatch active-color" style="width:28px;height:28px;" title="흰색"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="검정"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="빨강"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="주황"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="노랑"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="연두"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="초록"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="청록"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="파랑"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="남색"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="보라"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="분홍"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="갈색"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="살구색"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="하늘색"></div>
+        <div class="w-swatch" style="width:28px;height:28px;" title="회색"></div>
+      </div>
+      <p class="text-xs" style="color:var(--w-muted)">흰색 · 검정 · 빨강 · 주황 · 노랑 · 연두 · 초록 · 청록 · 파랑 · 남색 · 보라 · 분홍 · 갈색 · 살구색 · 하늘색 · 회색</p>
+    </div>
+
+    <!-- Brush size control (slider, 2~30px) -->
+    <div class="flex items-center gap-3 mb-3">
+      <span class="text-xs shrink-0" style="color:var(--w-muted)">굵기</span>
+      <i data-lucide="circle" class="shrink-0" style="width:10px;height:10px;color:var(--w-muted)"></i>
+      <div class="w-slider-track">
+        <div class="w-slider-thumb" style="left:30%;"></div>
+      </div>
+      <i data-lucide="circle" class="shrink-0" style="width:22px;height:22px;color:var(--w-muted)"></i>
+      <span class="text-xs shrink-0" style="color:var(--w-muted)">2 – 30px</span>
+    </div>
+
+    <!-- White canvas (painting area) -->
+    <div class="w-canvas-white w-full mb-4" style="height:220px; display:flex; align-items:center; justify-content:center; position:relative;">
+      <!-- Some painted strokes (simulated) -->
+      <div style="position:absolute;top:30px;left:20px;width:120px;height:40px;background:var(--w-fill);border-radius:20px;opacity:0.7;"></div>
+      <div style="position:absolute;top:70px;left:50px;width:80px;height:30px;background:var(--w-fill);border-radius:15px;opacity:0.5;"></div>
+      <span class="text-xs" style="color:var(--w-muted); position:absolute; bottom:12px; right:12px;">← 드래그로 색칠하기</span>
+    </div>
+
+    <div class="w-btn"><span class="text-sm font-bold">스크래치 시작 →</span></div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <ul>
+          <li>트리거: "직접 칠하기" 탭 클릭 시 진입</li>
+          <li>인터랙션: 팔레트 클릭 → 색상 선택(굵은 테두리 강조). 캔버스 드래그 → 해당 색으로 칠하기. 브러시 크기 슬라이더 조절 가능</li>
+          <li>인터랙션: "스크래치 시작"은 아무것도 칠하지 않아도 항상 활성화</li>
+          <li>전환: "스크래치 시작" → 스크래치 화면 (현재 캔버스 상태가 색상 레이어로 고정됨)</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ③ 스크래치 -->
+<div id="screen-3" class="screen" data-scenario="scenario-4 scenario-6">
+  <div class="screen-content @container max-w-4xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-4" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      스크래치
+    </h2>
+
+    <!-- Toolbar -->
+    <div class="flex items-center gap-2 mb-3 flex-wrap">
+      <!-- Brush size: 4 discrete options (2/4/6/8px) -->
+      <div class="flex items-center gap-2 flex-1">
+        <span class="text-xs shrink-0" style="color:var(--w-muted)">굵기</span>
+        <div class="flex gap-1">
+          <div class="w-size-opt selected">
+            <div class="w-size-dot" style="width:3px;height:3px;"></div>
+            <span style="font-size:9px;color:var(--w-text);">2px</span>
+          </div>
+          <div class="w-size-opt">
+            <div class="w-size-dot" style="width:5px;height:5px;"></div>
+            <span style="font-size:9px;color:var(--w-text);">4px</span>
+          </div>
+          <div class="w-size-opt">
+            <div class="w-size-dot" style="width:7px;height:7px;"></div>
+            <span style="font-size:9px;color:var(--w-text);">6px</span>
+          </div>
+          <div class="w-size-opt">
+            <div class="w-size-dot" style="width:9px;height:9px;"></div>
+            <span style="font-size:9px;color:var(--w-text);">8px</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="flex gap-2 shrink-0">
+        <button class="w-btn-ghost">
+          <i data-lucide="rotate-ccw" style="width:13px;height:13px;"></i>
+          <span class="text-xs">새로 시작</span>
+        </button>
+        <div class="w-btn" style="display:inline-flex; align-items:center; gap:6px; padding:8px 14px;">
+          <i data-lucide="download" style="width:13px;height:13px;"></i>
+          <span class="text-xs font-bold">저장</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dark canvas with scratch marks -->
+    <div class="w-canvas-dark w-full" style="height:300px;">
+      <!-- Revealed blobs (simulating scratched paths) -->
+      <div class="w-reveal" style="width:70px;height:70px;top:15px;left:20px;"></div>
+      <div class="w-reveal" style="width:50px;height:50px;top:45px;left:75px;"></div>
+      <div class="w-reveal" style="width:40px;height:40px;top:20px;left:110px;"></div>
+      <div class="w-reveal" style="width:90px;height:55px;top:90px;left:30px; border-radius:45%;"></div>
+      <div class="w-reveal" style="width:30px;height:30px;top:80px;left:130px;"></div>
+      <div class="w-reveal" style="width:55px;height:40px;top:110px;left:100px; border-radius:40%;"></div>
+      <!-- hint text -->
+      <span style="position:absolute;bottom:12px;right:12px;font-size:11px;color:var(--w-muted);">← 드래그로 긁기</span>
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <ul>
+          <li>트리거: "스크래치 시작" 클릭 후 진입. 캔버스는 검은 오버레이 전체로 시작</li>
+          <li>인터랙션: 드래그/터치 → 오버레이 제거되어 색상 레이어 노출. 브러시 크기 슬라이더 → 즉시 반영</li>
+          <li>인터랙션: "저장" → PNG 다운로드 (긁힌 + 미긁힌 영역 전체 포함). 언제든 저장 가능</li>
+          <li>전환: "새로 시작" → 확인 다이얼로그 표시 (화면 5). 확인 시 캔버스 크기 선택으로 이동</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ③ 스크래치 — 새로 시작 확인 다이얼로그 -->
+<div id="screen-4" class="screen" data-scenario="scenario-5">
+  <div class="screen-content @container max-w-4xl mx-auto p-6">
+
+    <h2 class="text-lg font-bold mb-4" style="color:var(--w-muted); border-bottom:1px solid var(--w-border); padding-bottom:8px;">
+      스크래치 — 새로 시작 확인
+    </h2>
+
+    <!-- Toolbar (dimmed) -->
+    <div class="flex items-center gap-2 mb-3" style="opacity:0.25; pointer-events:none;">
+      <div class="flex items-center gap-2 flex-1">
+        <span class="text-xs" style="color:var(--w-muted)">굵기</span>
+        <div class="flex gap-1">
+          <div class="w-size-opt selected"><div class="w-size-dot" style="width:3px;height:3px;"></div><span style="font-size:9px;">2px</span></div>
+          <div class="w-size-opt"><div class="w-size-dot" style="width:5px;height:5px;"></div><span style="font-size:9px;">4px</span></div>
+          <div class="w-size-opt"><div class="w-size-dot" style="width:7px;height:7px;"></div><span style="font-size:9px;">6px</span></div>
+          <div class="w-size-opt"><div class="w-size-dot" style="width:9px;height:9px;"></div><span style="font-size:9px;">8px</span></div>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button class="w-btn-ghost"><span class="text-xs">새로 시작</span></button>
+        <div class="w-btn" style="display:inline-flex;padding:8px 14px;"><span class="text-xs font-bold">저장</span></div>
+      </div>
+    </div>
+
+    <!-- Canvas + dialog overlay wrapper -->
+    <div style="position:relative;">
+
+      <!-- Canvas (dimmed) -->
+      <div class="w-canvas-dark w-full" style="height:300px; opacity:0.35;">
+        <div class="w-reveal" style="width:70px;height:70px;top:15px;left:20px;"></div>
+        <div class="w-reveal" style="width:90px;height:55px;top:90px;left:30px; border-radius:45%;"></div>
+        <div class="w-reveal" style="width:55px;height:40px;top:110px;left:100px; border-radius:40%;"></div>
+      </div>
+
+      <!-- Dialog overlay -->
+      <div class="w-dialog-backdrop">
+        <div class="w-dialog">
+          <p class="text-sm font-bold mb-1">새로 시작할까요?</p>
+          <p class="text-xs mb-5" style="color:var(--w-muted)">지금까지 작업한 내용이 모두 사라집니다.</p>
+          <div class="flex gap-2 justify-end">
+            <button class="w-btn-ghost"><span class="text-xs">취소</span></button>
+            <div class="w-btn" style="display:inline-flex; align-items:center; padding:8px 16px;">
+              <span class="text-xs font-bold">확인</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="screen-notes">
+      <details open>
+        <summary>Notes</summary>
+        <ul>
+          <li>트리거: 스크래치 화면에서 "새로 시작" 클릭 시 다이얼로그 출현. 배경 캔버스는 클릭 불가</li>
+          <li>인터랙션: "취소" → 다이얼로그 닫힘, 스크래치 화면 그대로 유지</li>
+          <li>전환: "확인" → 캔버스 크기 선택 화면으로 이동. 작업 전체 초기화</li>
+        </ul>
+      </details>
+    </div>
+
+  </div>
+</div>
+
+
+<script>
+var screenIds = [];
+
+function show(id) {
+  document.querySelectorAll('.screen').forEach(function(s) { s.classList.remove('active'); });
+  document.getElementById('screen-' + id).classList.add('active');
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('nav-' + id).classList.add('active');
+}
+
+function setViewport(mode) {
+  document.body.classList.remove('viewport-mobile', 'viewport-desktop');
+  document.body.classList.add('viewport-' + mode);
+  document.querySelectorAll('.vp-toggle button').forEach(function(b) { b.classList.remove('active'); });
+  document.getElementById('vp-' + mode).classList.add('active');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(function(b) {
+    screenIds.push(parseInt(b.id.replace('nav-', '')));
+  });
+  var first = document.querySelector('nav button[id^="nav-"]');
+  if (first) first.click();
+  lucide.createIcons();
+});
+</script>
+</body>
+</html>

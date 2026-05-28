@@ -117,11 +117,12 @@ export default function PaintCanvas({ selectedSize, onScratchStart, onSwitchMode
         className="border border-border rounded overflow-hidden"
         style={{ width: displayWidth, height: displayHeight }}
       >
+        {/* touch-action: none lets pointer events fire for both mouse and touch */}
         <canvas
           ref={canvasRef}
           width={width}
           height={height}
-          style={{ width: displayWidth, height: displayHeight, cursor: 'crosshair' }}
+          style={{ width: displayWidth, height: displayHeight, cursor: 'crosshair', touchAction: 'none' }}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}

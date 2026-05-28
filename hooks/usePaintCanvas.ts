@@ -14,17 +14,28 @@ export function usePaintCanvas() {
       if (!ctx) return
       ctx.fillStyle = selectedColor
       ctx.beginPath()
+      // brushSize is diameter — radius is brushSize / 2
       ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2)
       ctx.fill()
     },
     [selectedColor, brushSize]
   )
 
+  function toCanvasCoords(e: React.PointerEvent<HTMLCanvasElement>) {
+    const rect = e.currentTarget.getBoundingClientRect()
+    const scaleX = e.currentTarget.width / rect.width
+    const scaleY = e.currentTarget.height / rect.height
+    return {
+      x: (e.clientX - rect.left) * scaleX,
+      y: (e.clientY - rect.top) * scaleY,
+    }
+  }
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       isDrawing.current = true
-      const rect = e.currentTarget.getBoundingClientRect()
-      paint(e.clientX - rect.left, e.clientY - rect.top)
+      const { x, y } = toCanvasCoords(e)
+      paint(x, y)
     },
     [paint]
   )
@@ -32,8 +43,8 @@ export function usePaintCanvas() {
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       if (!isDrawing.current) return
-      const rect = e.currentTarget.getBoundingClientRect()
-      paint(e.clientX - rect.left, e.clientY - rect.top)
+      const { x, y } = toCanvasCoords(e)
+      paint(x, y)
     },
     [paint]
   )
