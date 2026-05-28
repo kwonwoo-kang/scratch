@@ -7,6 +7,7 @@ export function useScratchCanvas() {
   const [brushSize, setBrushSize] = useState<ScratchBrushSize>(4)
   const isDrawing = useRef(false)
   const lastPos = useRef<{ x: number; y: number } | null>(null)
+  const activePointerId = useRef<number | null>(null)
 
   const scratchStroke = useCallback(
     (x: number, y: number) => {
@@ -46,6 +47,8 @@ export function useScratchCanvas() {
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
+      if (activePointerId.current !== null) return
+      activePointerId.current = e.pointerId
       e.currentTarget.setPointerCapture(e.pointerId)
       isDrawing.current = true
       lastPos.current = null
@@ -57,6 +60,7 @@ export function useScratchCanvas() {
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
+      if (e.pointerId !== activePointerId.current) return
       if (!isDrawing.current) return
       const { x, y } = toCanvasCoords(e)
       scratchStroke(x, y)
@@ -64,9 +68,18 @@ export function useScratchCanvas() {
     [scratchStroke]
   )
 
-  const handlePointerUp = useCallback(() => {
+  const handlePointerUp = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerId !== activePointerId.current) return
     isDrawing.current = false
     lastPos.current = null
+    activePointerId.current = null
+  }, [])
+
+  const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
+    if (e.pointerId !== activePointerId.current) return
+    isDrawing.current = false
+    lastPos.current = null
+    activePointerId.current = null
   }, [])
 
   const resetOverlay = useCallback(() => {
@@ -88,6 +101,7 @@ export function useScratchCanvas() {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    handlePointerCancel,
     resetOverlay,
   }
 }
