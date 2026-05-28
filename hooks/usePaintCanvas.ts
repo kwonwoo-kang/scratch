@@ -5,18 +5,32 @@ export function usePaintCanvas() {
   const [selectedColor, setSelectedColor] = useState('#E63946')
   const [brushSize, setBrushSize] = useState(10)
   const isDrawing = useRef(false)
+  const lastPos = useRef<{ x: number; y: number } | null>(null)
 
-  const paint = useCallback(
+  const paintStroke = useCallback(
     (x: number, y: number) => {
       const canvas = canvasRef.current
       if (!canvas) return
       const ctx = canvas.getContext('2d')
       if (!ctx) return
-      ctx.fillStyle = selectedColor
-      ctx.beginPath()
-      // brushSize is diameter — radius is brushSize / 2
-      ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2)
-      ctx.fill()
+      const radius = brushSize / 2
+      ctx.strokeStyle = selectedColor
+      ctx.lineWidth = brushSize
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      if (lastPos.current) {
+        ctx.beginPath()
+        ctx.moveTo(lastPos.current.x, lastPos.current.y)
+        ctx.lineTo(x, y)
+        ctx.stroke()
+      } else {
+        // single dot on pointer down
+        ctx.fillStyle = selectedColor
+        ctx.beginPath()
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      lastPos.current = { x, y }
     },
     [selectedColor, brushSize]
   )
@@ -33,24 +47,27 @@ export function usePaintCanvas() {
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
+      e.currentTarget.setPointerCapture(e.pointerId)
       isDrawing.current = true
+      lastPos.current = null
       const { x, y } = toCanvasCoords(e)
-      paint(x, y)
+      paintStroke(x, y)
     },
-    [paint]
+    [paintStroke]
   )
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       if (!isDrawing.current) return
       const { x, y } = toCanvasCoords(e)
-      paint(x, y)
+      paintStroke(x, y)
     },
-    [paint]
+    [paintStroke]
   )
 
   const handlePointerUp = useCallback(() => {
     isDrawing.current = false
+    lastPos.current = null
   }, [])
 
   return {

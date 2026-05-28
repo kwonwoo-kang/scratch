@@ -102,7 +102,6 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
         />
       </div>
 

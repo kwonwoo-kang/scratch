@@ -126,7 +126,6 @@ export default function PaintCanvas({ selectedSize, onScratchStart, onSwitchMode
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
-          onPointerLeave={handlePointerUp}
         />
       </div>
 

@@ -6,18 +6,30 @@ export function useScratchCanvas() {
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
   const [brushSize, setBrushSize] = useState<ScratchBrushSize>(4)
   const isDrawing = useRef(false)
+  const lastPos = useRef<{ x: number; y: number } | null>(null)
 
-  const scratch = useCallback(
+  const scratchStroke = useCallback(
     (x: number, y: number) => {
       const canvas = overlayCanvasRef.current
       if (!canvas) return
       const ctx = canvas.getContext('2d')
       if (!ctx) return
       ctx.globalCompositeOperation = 'destination-out'
-      ctx.beginPath()
-      // brushSize is diameter — radius is brushSize / 2
-      ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2)
-      ctx.fill()
+      ctx.lineWidth = brushSize
+      ctx.lineCap = 'round'
+      ctx.lineJoin = 'round'
+      if (lastPos.current) {
+        ctx.beginPath()
+        ctx.moveTo(lastPos.current.x, lastPos.current.y)
+        ctx.lineTo(x, y)
+        ctx.stroke()
+      } else {
+        // single dot on pointer down
+        ctx.beginPath()
+        ctx.arc(x, y, brushSize / 2, 0, Math.PI * 2)
+        ctx.fill()
+      }
+      lastPos.current = { x, y }
     },
     [brushSize]
   )
@@ -34,24 +46,27 @@ export function useScratchCanvas() {
 
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
+      e.currentTarget.setPointerCapture(e.pointerId)
       isDrawing.current = true
+      lastPos.current = null
       const { x, y } = toCanvasCoords(e)
-      scratch(x, y)
+      scratchStroke(x, y)
     },
-    [scratch]
+    [scratchStroke]
   )
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
       if (!isDrawing.current) return
       const { x, y } = toCanvasCoords(e)
-      scratch(x, y)
+      scratchStroke(x, y)
     },
-    [scratch]
+    [scratchStroke]
   )
 
   const handlePointerUp = useCallback(() => {
     isDrawing.current = false
+    lastPos.current = null
   }, [])
 
   return {
