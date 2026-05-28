@@ -19,4 +19,9 @@ describe('useScratchCanvas', () => {
     expect(result.current.colorCanvasRef).toBeDefined()
     expect(result.current.overlayCanvasRef).toBeDefined()
   })
+
+  it('exposes resetOverlay function', () => {
+    const { result } = renderHook(() => useScratchCanvas())
+    expect(typeof result.current.resetOverlay).toBe('function')
+  })
 })

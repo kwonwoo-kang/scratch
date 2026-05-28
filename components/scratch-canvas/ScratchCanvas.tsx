@@ -24,8 +24,9 @@ interface ScratchCanvasProps {
 }
 
 export default function ScratchCanvas({ width, height, colorDataURL, onReset }: ScratchCanvasProps) {
-  const { colorCanvasRef, overlayCanvasRef, brushSize, setBrushSize, handlePointerDown, handlePointerMove, handlePointerUp } = useScratchCanvas()
+  const { colorCanvasRef, overlayCanvasRef, brushSize, setBrushSize, handlePointerDown, handlePointerMove, handlePointerUp, resetOverlay } = useScratchCanvas()
   const [showResetDialog, setShowResetDialog] = useState(false)
+  const [showRepaintDialog, setShowRepaintDialog] = useState(false)
 
   useEffect(() => {
     const colorCanvas = colorCanvasRef.current
@@ -49,13 +50,8 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
   }, [colorDataURL, width, height, colorCanvasRef])
 
   useEffect(() => {
-    const overlayCanvas = overlayCanvasRef.current
-    if (!overlayCanvas) return
-    const ctx = overlayCanvas.getContext('2d')
-    if (!ctx) return
-    ctx.fillStyle = '#000000'
-    ctx.fillRect(0, 0, width, height)
-  }, [width, height, overlayCanvasRef])
+    resetOverlay()
+  }, [width, height, resetOverlay])
 
   const scale = Math.min(1, 800 / Math.max(width, height))
   const displayWidth = Math.round(width * scale)
@@ -116,16 +112,33 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
         >
           저장
         </Button>
+        <Button variant="secondary" onClick={() => setShowRepaintDialog(true)}>
+          다시 그리기
+        </Button>
         <Button variant="destructive" onClick={() => setShowResetDialog(true)}>
-          새로 시작
+          처음부터
         </Button>
       </div>
+
+      {/* Repaint confirm dialog */}
+      <Dialog open={showRepaintDialog} onOpenChange={setShowRepaintDialog}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>다시 그릴까요?</DialogTitle>
+            <DialogDescription>긁어낸 흔적이 사라집니다.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRepaintDialog(false)}>취소</Button>
+            <Button onClick={() => { setShowRepaintDialog(false); resetOverlay() }}>확인</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Reset confirm dialog */}
       <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
         <DialogContent showCloseButton={false}>
           <DialogHeader>
-            <DialogTitle>새로 시작하시겠어요?</DialogTitle>
+            <DialogTitle>처음부터 시작하시겠어요?</DialogTitle>
             <DialogDescription>지금까지 작업한 내용이 모두 사라집니다.</DialogDescription>
           </DialogHeader>
           <DialogFooter>

@@ -69,6 +69,17 @@ export function useScratchCanvas() {
     lastPos.current = null
   }, [])
 
+  const resetOverlay = useCallback(() => {
+    const canvas = overlayCanvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+    // scratchStroke leaves destination-out active — restore before filling black
+    ctx.globalCompositeOperation = 'source-over'
+    ctx.fillStyle = '#000000'
+    ctx.fillRect(0, 0, canvas.width, canvas.height)
+  }, [])
+
   return {
     colorCanvasRef,
     overlayCanvasRef,
@@ -77,5 +88,6 @@ export function useScratchCanvas() {
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
+    resetOverlay,
   }
 }
