@@ -51,14 +51,6 @@ describe('useScratchCanvas', () => {
   })
 
   describe('multi-touch pan', () => {
-    beforeEach(() => {
-      vi.spyOn(window, 'scrollBy').mockImplementation(() => {})
-    })
-
-    afterEach(() => {
-      vi.restoreAllMocks()
-    })
-
     it('2nd pointer down stops drawing (no additional scratchStroke)', () => {
       const { result } = renderHook(() => useScratchCanvas())
       const { canvas, ctx } = makeCanvas()
@@ -72,8 +64,9 @@ describe('useScratchCanvas', () => {
       expect(ctx.beginPath.mock.calls.length).toBe(callsAfterFirst)
     })
 
-    it('pointermove with 2 pointers calls window.scrollBy with both X and Y delta', () => {
-      const { result } = renderHook(() => useScratchCanvas())
+    it('pointermove with 2 pointers calls onPan with both X and Y delta', () => {
+      const onPan = vi.fn()
+      const { result } = renderHook(() => useScratchCanvas({ onPan }))
       const { canvas } = makeCanvas()
       ;(result.current.overlayCanvasRef as MutableRefObject<HTMLCanvasElement>).current = canvas
 
@@ -84,21 +77,22 @@ describe('useScratchCanvas', () => {
       // centroid = (30, 150)
       act(() => {
         result.current.handlePointerMove(makeEvent(canvas, 1, 20, 110))
-        // after move: pointer1=(20,110), pointer2=(50,200) → centroid=(35,155), deltaX=5, deltaY=5 → scrollBy(-5,-5)
+        // after move: pointer1=(20,110), pointer2=(50,200) → centroid=(35,155), deltaX=5, deltaY=5
       })
 
-      expect(vi.mocked(window.scrollBy)).toHaveBeenCalledWith(-5, -5)
+      expect(onPan).toHaveBeenCalledWith(5, 5)
     })
 
-    it('pointermove with single pointer does not call scrollBy', () => {
-      const { result } = renderHook(() => useScratchCanvas())
+    it('pointermove with single pointer does not call onPan', () => {
+      const onPan = vi.fn()
+      const { result } = renderHook(() => useScratchCanvas({ onPan }))
       const { canvas } = makeCanvas()
       ;(result.current.overlayCanvasRef as MutableRefObject<HTMLCanvasElement>).current = canvas
 
       act(() => { result.current.handlePointerDown(makeEvent(canvas, 1, 10, 10)) })
       act(() => { result.current.handlePointerMove(makeEvent(canvas, 1, 10, 30)) })
 
-      expect(vi.mocked(window.scrollBy)).not.toHaveBeenCalled()
+      expect(onPan).not.toHaveBeenCalled()
     })
 
     it('after 2→1 finger, remaining finger move does not draw', () => {

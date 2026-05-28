@@ -7,10 +7,11 @@ interface UseScratchCanvasOpts {
   onStrokeStart?: () => void
   onStrokeTick?: () => void
   onStrokeEnd?: () => void
+  onPan?: (deltaX: number, deltaY: number) => void
 }
 
 export function useScratchCanvas(opts: UseScratchCanvasOpts = {}) {
-  const { onStrokeStart, onStrokeTick, onStrokeEnd } = opts
+  const { onStrokeStart, onStrokeTick, onStrokeEnd, onPan } = opts
   const colorCanvasRef = useRef<HTMLCanvasElement>(null)
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
   const [brushSize, setBrushSize] = useState<ScratchBrushSize>(4)
@@ -105,11 +106,11 @@ export function useScratchCanvas(opts: UseScratchCanvasOpts = {}) {
         const newCentroid = getCentroid(activePointers.current)
         const deltaX = newCentroid.x - panLastCentroid.current.x
         const deltaY = newCentroid.y - panLastCentroid.current.y
-        window.scrollBy(-deltaX, -deltaY)
+        onPan?.(deltaX, deltaY)
         panLastCentroid.current = newCentroid
       }
     },
-    [scratchStroke]
+    [scratchStroke, onPan]
   )
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {

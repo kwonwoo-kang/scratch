@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
@@ -29,10 +29,17 @@ interface ScratchCanvasProps {
 export default function ScratchCanvas({ width, height, colorDataURL, onReset }: ScratchCanvasProps) {
   const [soundEnabled, setSoundEnabled] = useState(true)
   const sound = useScratchSound(soundEnabled)
+  const scrollRef = useRef<HTMLDivElement>(null)
   const { colorCanvasRef, overlayCanvasRef, brushSize, setBrushSize, handlePointerDown, handlePointerMove, handlePointerUp, handlePointerCancel, resetOverlay } = useScratchCanvas({
     onStrokeStart: sound.start,
     onStrokeTick: sound.tick,
     onStrokeEnd: sound.stop,
+    onPan: (deltaX, deltaY) => {
+      const el = scrollRef.current
+      if (!el) return
+      el.scrollLeft -= deltaX
+      el.scrollTop -= deltaY
+    },
   })
   const [showResetDialog, setShowResetDialog] = useState(false)
   const [showRepaintDialog, setShowRepaintDialog] = useState(false)
@@ -67,6 +74,7 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
   const displayHeight = Math.round(height * scale)
 
   return (
+    <div ref={scrollRef} style={{ height: '100dvh', overflow: 'auto' }}>
     <div className="flex flex-col gap-4 p-4 items-center">
       {/* Action buttons */}
       <div className="flex gap-2 items-center">
@@ -171,6 +179,7 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
           </DialogFooter>
         </DialogContent>
       </Dialog>
+    </div>
     </div>
   )
 }
