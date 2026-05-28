@@ -6,9 +6,10 @@ import SizePicker from '@/components/scratch-canvas/SizePicker'
 import PresetPicker from '@/components/scratch-canvas/PresetPicker'
 import PaintCanvas from '@/components/scratch-canvas/PaintCanvas'
 import ScratchCanvas from '@/components/scratch-canvas/ScratchCanvas'
+import StartScreen from '@/components/scratch-canvas/StartScreen'
 
 export default function ScratchCanvasPage() {
-  const [step, setStep] = useState<AppStep>('size-pick')
+  const [step, setStep] = useState<AppStep>('start')
   const [canvasSize, setCanvasSize] = useState<CanvasSize | null>(null)
   const [layerMode, setLayerMode] = useState<LayerMode>('preset')
   const [colorDataURL, setColorDataURL] = useState<ColorLayerDataURL>('')
@@ -32,6 +33,10 @@ export default function ScratchCanvasPage() {
 
   return (
     <main className="min-h-screen bg-background">
+      {step === 'start' && (
+        <StartScreen onStart={() => setStep('size-pick')} />
+      )}
+
       {step === 'size-pick' && (
         <SizePicker onSelect={handleSizeSelect} />
       )}

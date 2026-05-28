@@ -1,13 +1,17 @@
 import { useRef, useState, useCallback } from 'react'
 import type { ScratchBrushSize } from '@/types/scratch-canvas'
 
+type PointerPos = { clientX: number; clientY: number }
+
 export function useScratchCanvas() {
   const colorCanvasRef = useRef<HTMLCanvasElement>(null)
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null)
   const [brushSize, setBrushSize] = useState<ScratchBrushSize>(4)
   const isDrawing = useRef(false)
   const lastPos = useRef<{ x: number; y: number } | null>(null)
-  const activePointerId = useRef<number | null>(null)
+  const drawingPointerId = useRef<number | null>(null)
+  const activePointers = useRef<Map<number, PointerPos>>(new Map())
+  const panLastCentroidY = useRef<number | null>(null)
 
   const scratchStroke = useCallback(
     (x: number, y: number) => {
@@ -45,41 +49,87 @@ export function useScratchCanvas() {
     }
   }
 
+  function getCentroidY(pointers: Map<number, PointerPos>): number {
+    let sum = 0
+    pointers.forEach((p) => { sum += p.clientY })
+    return sum / pointers.size
+  }
+
   const handlePointerDown = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      if (activePointerId.current !== null) return
-      activePointerId.current = e.pointerId
-      e.currentTarget.setPointerCapture(e.pointerId)
-      isDrawing.current = true
-      lastPos.current = null
-      const { x, y } = toCanvasCoords(e)
-      scratchStroke(x, y)
+      activePointers.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY })
+
+      if (activePointers.current.size === 1) {
+        drawingPointerId.current = e.pointerId
+        e.currentTarget.setPointerCapture(e.pointerId)
+        isDrawing.current = true
+        lastPos.current = null
+        const { x, y } = toCanvasCoords(e)
+        scratchStroke(x, y)
+      } else if (activePointers.current.size === 2) {
+        // cancel ongoing stroke
+        isDrawing.current = false
+        lastPos.current = null
+        if (drawingPointerId.current !== null) {
+          try { e.currentTarget.releasePointerCapture(drawingPointerId.current) } catch {}
+          drawingPointerId.current = null
+        }
+        panLastCentroidY.current = getCentroidY(activePointers.current)
+      }
+      // 3+ fingers: just tracked in Map, pan uses first two
     },
     [scratchStroke]
   )
 
   const handlePointerMove = useCallback(
     (e: React.PointerEvent<HTMLCanvasElement>) => {
-      if (e.pointerId !== activePointerId.current) return
-      if (!isDrawing.current) return
-      const { x, y } = toCanvasCoords(e)
-      scratchStroke(x, y)
+      if (!activePointers.current.has(e.pointerId)) return
+      activePointers.current.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY })
+
+      if (activePointers.current.size === 1) {
+        if (!isDrawing.current) return
+        const { x, y } = toCanvasCoords(e)
+        scratchStroke(x, y)
+      } else {
+        if (panLastCentroidY.current === null) return
+        const newCentroidY = getCentroidY(activePointers.current)
+        const delta = newCentroidY - panLastCentroidY.current
+        window.scrollBy(0, -delta)
+        panLastCentroidY.current = newCentroidY
+      }
     },
     [scratchStroke]
   )
 
   const handlePointerUp = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (e.pointerId !== activePointerId.current) return
-    isDrawing.current = false
-    lastPos.current = null
-    activePointerId.current = null
+    activePointers.current.delete(e.pointerId)
+
+    if (activePointers.current.size === 0) {
+      isDrawing.current = false
+      lastPos.current = null
+      drawingPointerId.current = null
+      panLastCentroidY.current = null
+    } else {
+      // transitioned from 2→1: stop pan, do not auto-resume drawing
+      panLastCentroidY.current = null
+      isDrawing.current = false
+      lastPos.current = null
+    }
   }, [])
 
   const handlePointerCancel = useCallback((e: React.PointerEvent<HTMLCanvasElement>) => {
-    if (e.pointerId !== activePointerId.current) return
-    isDrawing.current = false
-    lastPos.current = null
-    activePointerId.current = null
+    activePointers.current.delete(e.pointerId)
+
+    if (activePointers.current.size === 0) {
+      isDrawing.current = false
+      lastPos.current = null
+      drawingPointerId.current = null
+      panLastCentroidY.current = null
+    } else {
+      panLastCentroidY.current = null
+      isDrawing.current = false
+      lastPos.current = null
+    }
   }, [])
 
   const resetOverlay = useCallback(() => {

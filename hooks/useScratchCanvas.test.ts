@@ -1,5 +1,5 @@
 import { renderHook, act } from '@testing-library/react'
-import { describe, it, expect, vi } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { useScratchCanvas } from './useScratchCanvas'
 import type React from 'react'
 import type { MutableRefObject } from 'react'
@@ -13,6 +13,7 @@ function makeCanvas() {
     right: 100, bottom: 100, x: 0, y: 0, toJSON: () => {},
   })
   canvas.setPointerCapture = vi.fn()
+  canvas.releasePointerCapture = vi.fn()
   const ctx = {
     globalCompositeOperation: 'source-over' as GlobalCompositeOperation,
     lineWidth: 0, lineCap: 'round' as CanvasLineCap, lineJoin: 'round' as CanvasLineJoin, fillStyle: '',
@@ -49,8 +50,16 @@ describe('useScratchCanvas', () => {
     expect(typeof result.current.resetOverlay).toBe('function')
   })
 
-  describe('multi-touch guard', () => {
-    it('ignores second pointerdown while first is active', () => {
+  describe('multi-touch pan', () => {
+    beforeEach(() => {
+      vi.spyOn(window, 'scrollBy').mockImplementation(() => {})
+    })
+
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('2nd pointer down stops drawing (no additional scratchStroke)', () => {
       const { result } = renderHook(() => useScratchCanvas())
       const { canvas, ctx } = makeCanvas()
       ;(result.current.overlayCanvasRef as MutableRefObject<HTMLCanvasElement>).current = canvas
@@ -63,36 +72,71 @@ describe('useScratchCanvas', () => {
       expect(ctx.beginPath.mock.calls.length).toBe(callsAfterFirst)
     })
 
-    it('ignores pointermove from a different pointerId', () => {
+    it('pointermove with 2 pointers calls window.scrollBy', () => {
       const { result } = renderHook(() => useScratchCanvas())
-      const { canvas, ctx } = makeCanvas()
+      const { canvas } = makeCanvas()
       ;(result.current.overlayCanvasRef as MutableRefObject<HTMLCanvasElement>).current = canvas
 
-      act(() => { result.current.handlePointerDown(makeEvent(canvas, 1)) })
-      const callsAfterDown = ctx.beginPath.mock.calls.length
+      act(() => {
+        result.current.handlePointerDown(makeEvent(canvas, 1, 10, 100))
+        result.current.handlePointerDown(makeEvent(canvas, 2, 50, 200))
+      })
+      // centroid Y = (100+200)/2 = 150
+      act(() => {
+        result.current.handlePointerMove(makeEvent(canvas, 1, 10, 110))
+        // after move: pointer1 clientY=110, pointer2 clientY=200 → centroid=155, delta=5, scrollBy(0,-5)
+      })
 
-      act(() => { result.current.handlePointerMove(makeEvent(canvas, 2, 20, 20)) })
-
-      expect(ctx.beginPath.mock.calls.length).toBe(callsAfterDown)
+      expect(vi.mocked(window.scrollBy)).toHaveBeenCalledWith(0, -5)
     })
 
-    it('ignores pointerup from a different pointerId — first pointer drawing continues', () => {
+    it('pointermove with single pointer does not call scrollBy', () => {
+      const { result } = renderHook(() => useScratchCanvas())
+      const { canvas } = makeCanvas()
+      ;(result.current.overlayCanvasRef as MutableRefObject<HTMLCanvasElement>).current = canvas
+
+      act(() => { result.current.handlePointerDown(makeEvent(canvas, 1, 10, 10)) })
+      act(() => { result.current.handlePointerMove(makeEvent(canvas, 1, 10, 30)) })
+
+      expect(vi.mocked(window.scrollBy)).not.toHaveBeenCalled()
+    })
+
+    it('after 2→1 finger, remaining finger move does not draw', () => {
       const { result } = renderHook(() => useScratchCanvas())
       const { canvas, ctx } = makeCanvas()
       ;(result.current.overlayCanvasRef as MutableRefObject<HTMLCanvasElement>).current = canvas
 
       act(() => {
         result.current.handlePointerDown(makeEvent(canvas, 1))
+        result.current.handlePointerDown(makeEvent(canvas, 2))
         result.current.handlePointerUp(makeEvent(canvas, 2))
       })
       const callsBefore = ctx.beginPath.mock.calls.length
 
-      act(() => { result.current.handlePointerMove(makeEvent(canvas, 1, 30, 30)) })
+      act(() => { result.current.handlePointerMove(makeEvent(canvas, 1, 50, 50)) })
 
-      expect(ctx.beginPath.mock.calls.length).toBeGreaterThan(callsBefore)
+      expect(ctx.beginPath.mock.calls.length).toBe(callsBefore)
     })
 
-    it('accepts new pointerdown after pointercancel releases the active pointer', () => {
+    it('after all pointers lifted, new pointerdown resumes drawing', () => {
+      const { result } = renderHook(() => useScratchCanvas())
+      const { canvas, ctx } = makeCanvas()
+      ;(result.current.overlayCanvasRef as MutableRefObject<HTMLCanvasElement>).current = canvas
+
+      act(() => {
+        result.current.handlePointerDown(makeEvent(canvas, 1))
+        result.current.handlePointerDown(makeEvent(canvas, 2))
+        result.current.handlePointerUp(makeEvent(canvas, 1))
+        result.current.handlePointerUp(makeEvent(canvas, 2))
+      })
+      const callsAfterLift = ctx.beginPath.mock.calls.length
+
+      act(() => { result.current.handlePointerDown(makeEvent(canvas, 3)) })
+
+      expect(ctx.beginPath.mock.calls.length).toBeGreaterThan(callsAfterLift)
+    })
+
+    it('accepts new drawing after pointercancel releases all pointers', () => {
       const { result } = renderHook(() => useScratchCanvas())
       const { canvas, ctx } = makeCanvas()
       ;(result.current.overlayCanvasRef as MutableRefObject<HTMLCanvasElement>).current = canvas
@@ -106,6 +150,19 @@ describe('useScratchCanvas', () => {
       act(() => { result.current.handlePointerDown(makeEvent(canvas, 2)) })
 
       expect(ctx.beginPath.mock.calls.length).toBeGreaterThan(callsAfterCancel)
+    })
+
+    it('ignores pointermove from unregistered pointerId', () => {
+      const { result } = renderHook(() => useScratchCanvas())
+      const { canvas, ctx } = makeCanvas()
+      ;(result.current.overlayCanvasRef as MutableRefObject<HTMLCanvasElement>).current = canvas
+
+      act(() => { result.current.handlePointerDown(makeEvent(canvas, 1)) })
+      const callsAfterDown = ctx.beginPath.mock.calls.length
+
+      act(() => { result.current.handlePointerMove(makeEvent(canvas, 99, 20, 20)) })
+
+      expect(ctx.beginPath.mock.calls.length).toBe(callsAfterDown)
     })
   })
 })

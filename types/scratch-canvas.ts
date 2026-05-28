@@ -1,6 +1,6 @@
 export type CanvasSize = { width: number; height: number; label: string }
 
-export type AppStep = 'size-pick' | 'layer-pick' | 'scratch'
+export type AppStep = 'start' | 'size-pick' | 'layer-pick' | 'scratch'
 
 export type LayerMode = 'preset' | 'paint'
 

@@ -10,12 +10,13 @@ const defaultProps = {
 }
 
 describe('ScratchCanvas', () => {
-  it('renders 4 brush size buttons (2, 4, 6, 8)', () => {
+  it('renders 선 굵기 label and 4 brush size buttons (2, 4, 6, 8)', () => {
     render(<ScratchCanvas {...defaultProps} />)
-    expect(screen.getByRole('button', { name: /2px/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /4px/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /6px/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /8px/i })).toBeInTheDocument()
+    expect(screen.getByText('선 굵기:')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '선 굵기 2px' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '선 굵기 4px' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '선 굵기 6px' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '선 굵기 8px' })).toBeInTheDocument()
   })
 
   it('renders Save, Repaint, and Reset buttons in order', () => {

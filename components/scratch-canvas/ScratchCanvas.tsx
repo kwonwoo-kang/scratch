@@ -79,14 +79,15 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
       </div>
 
       {/* Brush size controls */}
-      <div className="flex gap-2">
+      <div className="flex items-center gap-2">
+        <span className="text-sm text-muted-foreground">선 굵기:</span>
         {BRUSH_SIZES.map((size) => (
           <Button
             key={size}
             variant={brushSize === size ? 'default' : 'outline'}
             size="sm"
             onClick={() => setBrushSize(size)}
-            aria-label={`${size}px`}
+            aria-label={`선 굵기 ${size}px`}
           >
             {size}px
           </Button>
