@@ -24,7 +24,7 @@ interface ScratchCanvasProps {
 }
 
 export default function ScratchCanvas({ width, height, colorDataURL, onReset }: ScratchCanvasProps) {
-  const { colorCanvasRef, overlayCanvasRef, brushSize, setBrushSize, handlePointerDown, handlePointerMove, handlePointerUp, resetOverlay } = useScratchCanvas()
+  const { colorCanvasRef, overlayCanvasRef, brushSize, setBrushSize, handlePointerDown, handlePointerMove, handlePointerUp, handlePointerCancel, resetOverlay } = useScratchCanvas()
   const [showResetDialog, setShowResetDialog] = useState(false)
   const [showRepaintDialog, setShowRepaintDialog] = useState(false)
 
@@ -59,6 +59,25 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
 
   return (
     <div className="flex flex-col gap-4 p-4 items-center">
+      {/* Action buttons */}
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          onClick={() => {
+            const overlay = overlayCanvasRef.current
+            if (overlay) exportAsPng(colorDataURL, overlay, width, height)
+          }}
+        >
+          저장
+        </Button>
+        <Button variant="secondary" onClick={() => setShowRepaintDialog(true)}>
+          다시 그리기
+        </Button>
+        <Button variant="destructive" onClick={() => setShowResetDialog(true)}>
+          처음부터
+        </Button>
+      </div>
+
       {/* Brush size controls */}
       <div className="flex gap-2">
         {BRUSH_SIZES.map((size) => (
@@ -98,26 +117,8 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
         />
-      </div>
-
-      {/* Action buttons */}
-      <div className="flex gap-2">
-        <Button
-          variant="outline"
-          onClick={() => {
-            const overlay = overlayCanvasRef.current
-            if (overlay) exportAsPng(colorDataURL, overlay, width, height)
-          }}
-        >
-          저장
-        </Button>
-        <Button variant="secondary" onClick={() => setShowRepaintDialog(true)}>
-          다시 그리기
-        </Button>
-        <Button variant="destructive" onClick={() => setShowResetDialog(true)}>
-          처음부터
-        </Button>
       </div>
 
       {/* Repaint confirm dialog */}
