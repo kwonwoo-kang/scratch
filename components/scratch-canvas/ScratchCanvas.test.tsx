@@ -6,7 +6,6 @@ const defaultProps = {
   width: 800,
   height: 800,
   colorDataURL: '',
-  onSave: vi.fn(),
   onReset: vi.fn(),
 }
 

@@ -12,6 +12,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { useScratchCanvas } from '@/hooks/useScratchCanvas'
+import { exportAsPng } from '@/lib/exportCanvas'
 import type { ScratchBrushSize, ColorLayerDataURL } from '@/types/scratch-canvas'
 
 const BRUSH_SIZES: ScratchBrushSize[] = [2, 4, 6, 8]
@@ -20,11 +21,10 @@ interface ScratchCanvasProps {
   width: number
   height: number
   colorDataURL: ColorLayerDataURL
-  onSave: (overlayCanvas: HTMLCanvasElement) => void
   onReset: () => void
 }
 
-export default function ScratchCanvas({ width, height, colorDataURL, onSave, onReset }: ScratchCanvasProps) {
+export default function ScratchCanvas({ width, height, colorDataURL, onReset }: ScratchCanvasProps) {
   const { colorCanvasRef, overlayCanvasRef, brushSize, setBrushSize, handlePointerDown, handlePointerMove, handlePointerUp } = useScratchCanvas()
   const [showResetDialog, setShowResetDialog] = useState(false)
   const touchMoveListenerRef = useRef<{ el: HTMLCanvasElement; handler: (e: TouchEvent) => void } | null>(null)
@@ -138,7 +138,13 @@ export default function ScratchCanvas({ width, height, colorDataURL, onSave, onR
 
       {/* Action buttons */}
       <div className="flex gap-2">
-        <Button variant="outline" onClick={() => onSave(overlayCanvasRef.current!)}>
+        <Button
+          variant="outline"
+          onClick={() => {
+            const overlay = overlayCanvasRef.current
+            if (overlay) exportAsPng(colorDataURL, overlay, width, height)
+          }}
+        >
           저장
         </Button>
         <Button variant="destructive" onClick={() => setShowResetDialog(true)}>
