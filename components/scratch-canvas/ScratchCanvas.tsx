@@ -125,7 +125,7 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
         <DialogContent showCloseButton={false}>
           <DialogHeader>
             <DialogTitle>다시 그릴까요?</DialogTitle>
-            <DialogDescription>긁어낸 흔적이 사라집니다.</DialogDescription>
+            <DialogDescription>지금까지 그린 그림이 사라집니다.</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRepaintDialog(false)}>취소</Button>
