@@ -72,7 +72,7 @@ describe('useScratchCanvas', () => {
       expect(ctx.beginPath.mock.calls.length).toBe(callsAfterFirst)
     })
 
-    it('pointermove with 2 pointers calls window.scrollBy', () => {
+    it('pointermove with 2 pointers calls window.scrollBy with both X and Y delta', () => {
       const { result } = renderHook(() => useScratchCanvas())
       const { canvas } = makeCanvas()
       ;(result.current.overlayCanvasRef as MutableRefObject<HTMLCanvasElement>).current = canvas
@@ -81,13 +81,13 @@ describe('useScratchCanvas', () => {
         result.current.handlePointerDown(makeEvent(canvas, 1, 10, 100))
         result.current.handlePointerDown(makeEvent(canvas, 2, 50, 200))
       })
-      // centroid Y = (100+200)/2 = 150
+      // centroid = (30, 150)
       act(() => {
-        result.current.handlePointerMove(makeEvent(canvas, 1, 10, 110))
-        // after move: pointer1 clientY=110, pointer2 clientY=200 → centroid=155, delta=5, scrollBy(0,-5)
+        result.current.handlePointerMove(makeEvent(canvas, 1, 20, 110))
+        // after move: pointer1=(20,110), pointer2=(50,200) → centroid=(35,155), deltaX=5, deltaY=5 → scrollBy(-5,-5)
       })
 
-      expect(vi.mocked(window.scrollBy)).toHaveBeenCalledWith(0, -5)
+      expect(vi.mocked(window.scrollBy)).toHaveBeenCalledWith(-5, -5)
     })
 
     it('pointermove with single pointer does not call scrollBy', () => {

@@ -18,7 +18,7 @@ export function useScratchCanvas(opts: UseScratchCanvasOpts = {}) {
   const lastPos = useRef<{ x: number; y: number } | null>(null)
   const drawingPointerId = useRef<number | null>(null)
   const activePointers = useRef<Map<number, PointerPos>>(new Map())
-  const panLastCentroidY = useRef<number | null>(null)
+  const panLastCentroid = useRef<{ x: number; y: number } | null>(null)
 
   const scratchStroke = useCallback(
     (x: number, y: number) => {
@@ -57,10 +57,10 @@ export function useScratchCanvas(opts: UseScratchCanvasOpts = {}) {
     }
   }
 
-  function getCentroidY(pointers: Map<number, PointerPos>): number {
-    let sum = 0
-    pointers.forEach((p) => { sum += p.clientY })
-    return sum / pointers.size
+  function getCentroid(pointers: Map<number, PointerPos>): { x: number; y: number } {
+    let sumX = 0, sumY = 0
+    pointers.forEach((p) => { sumX += p.clientX; sumY += p.clientY })
+    return { x: sumX / pointers.size, y: sumY / pointers.size }
   }
 
   const handlePointerDown = useCallback(
@@ -84,7 +84,7 @@ export function useScratchCanvas(opts: UseScratchCanvasOpts = {}) {
           drawingPointerId.current = null
         }
         onStrokeEnd?.()
-        panLastCentroidY.current = getCentroidY(activePointers.current)
+        panLastCentroid.current = getCentroid(activePointers.current)
       }
       // 3+ fingers: just tracked in Map, pan uses first two
     },
@@ -101,11 +101,12 @@ export function useScratchCanvas(opts: UseScratchCanvasOpts = {}) {
         const { x, y } = toCanvasCoords(e)
         scratchStroke(x, y)
       } else {
-        if (panLastCentroidY.current === null) return
-        const newCentroidY = getCentroidY(activePointers.current)
-        const delta = newCentroidY - panLastCentroidY.current
-        window.scrollBy(0, -delta)
-        panLastCentroidY.current = newCentroidY
+        if (panLastCentroid.current === null) return
+        const newCentroid = getCentroid(activePointers.current)
+        const deltaX = newCentroid.x - panLastCentroid.current.x
+        const deltaY = newCentroid.y - panLastCentroid.current.y
+        window.scrollBy(-deltaX, -deltaY)
+        panLastCentroid.current = newCentroid
       }
     },
     [scratchStroke]
@@ -118,11 +119,11 @@ export function useScratchCanvas(opts: UseScratchCanvasOpts = {}) {
       isDrawing.current = false
       lastPos.current = null
       drawingPointerId.current = null
-      panLastCentroidY.current = null
+      panLastCentroid.current = null
       onStrokeEnd?.()
     } else {
       // transitioned from 2→1: stop pan, do not auto-resume drawing
-      panLastCentroidY.current = null
+      panLastCentroid.current = null
       isDrawing.current = false
       lastPos.current = null
       onStrokeEnd?.()
@@ -136,10 +137,10 @@ export function useScratchCanvas(opts: UseScratchCanvasOpts = {}) {
       isDrawing.current = false
       lastPos.current = null
       drawingPointerId.current = null
-      panLastCentroidY.current = null
+      panLastCentroid.current = null
       onStrokeEnd?.()
     } else {
-      panLastCentroidY.current = null
+      panLastCentroid.current = null
       isDrawing.current = false
       lastPos.current = null
       onStrokeEnd?.()
