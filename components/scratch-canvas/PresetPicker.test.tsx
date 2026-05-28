@@ -7,6 +7,13 @@ beforeAll(() => {
   const fakeCtx = {
     fillRect: vi.fn(),
     fillStyle: '',
+    globalAlpha: 1,
+    globalCompositeOperation: 'source-over',
+    save: vi.fn(),
+    restore: vi.fn(),
+    beginPath: vi.fn(),
+    arc: vi.fn(),
+    fill: vi.fn(),
     createLinearGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
     createRadialGradient: vi.fn().mockReturnValue({ addColorStop: vi.fn() }),
   }

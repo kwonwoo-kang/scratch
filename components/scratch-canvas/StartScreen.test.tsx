@@ -16,8 +16,8 @@ describe('StartScreen', () => {
   it('renders usage instructions', () => {
     render(<StartScreen onStart={vi.fn()} />)
     expect(screen.getByText(/캔버스 크기를 고르세요/i)).toBeInTheDocument()
-    expect(screen.getByText(/배경 색을 칠하세요/i)).toBeInTheDocument()
-    expect(screen.getByText(/손가락으로 긁어/i)).toBeInTheDocument()
+    expect(screen.getByText(/배경 색을 고르거나/i)).toBeInTheDocument()
+    expect(screen.getByText(/원하시는대로 그림을/i)).toBeInTheDocument()
   })
 
   it('renders 시작하기 button', () => {
