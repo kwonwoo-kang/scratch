@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Volume2, VolumeX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   Dialog,
   DialogContent,
@@ -84,14 +85,19 @@ export default function ScratchCanvas({ width, height, colorDataURL, onReset }: 
         <Button variant="destructive" onClick={() => setShowResetDialog(true)}>
           처음부터
         </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setSoundEnabled((v) => !v)}
-          aria-label={soundEnabled ? '효과음 끄기' : '효과음 켜기'}
-        >
-          {soundEnabled ? <Volume2 /> : <VolumeX />}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSoundEnabled((v) => !v)}
+              aria-label={soundEnabled ? '효과음 끄기' : '효과음 켜기'}
+            >
+              {soundEnabled ? <Volume2 /> : <VolumeX />}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{soundEnabled ? '효과음 끄기' : '효과음 켜기'}</TooltipContent>
+        </Tooltip>
       </div>
 
       {/* Brush size controls */}

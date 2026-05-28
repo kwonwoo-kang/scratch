@@ -3,7 +3,7 @@ import { useRef, useState, useCallback } from 'react'
 export function usePaintCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const [selectedColor, setSelectedColor] = useState('#E63946')
-  const [brushSize, setBrushSize] = useState(10)
+  const [brushSize, setBrushSize] = useState(30)
   const isDrawing = useRef(false)
   const lastPos = useRef<{ x: number; y: number } | null>(null)
 

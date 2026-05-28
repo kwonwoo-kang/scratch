@@ -8,9 +8,9 @@ describe('usePaintCanvas', () => {
     expect(result.current.selectedColor).toBe('#E63946')
   })
 
-  it('initializes with default brush size 10', () => {
+  it('initializes with default brush size 30', () => {
     const { result } = renderHook(() => usePaintCanvas())
-    expect(result.current.brushSize).toBe(10)
+    expect(result.current.brushSize).toBe(30)
   })
 
   it('updates selectedColor', () => {

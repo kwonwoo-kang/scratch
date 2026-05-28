@@ -34,11 +34,11 @@ describe('PaintCanvas', () => {
     expect(swatches.length).toBe(16)
   })
 
-  it('renders brush size slider with min=2 max=30', () => {
+  it('renders brush size slider with min=30 max=60', () => {
     render(<PaintCanvas {...defaultProps} />)
     const slider = screen.getByRole('slider')
-    expect(slider).toHaveAttribute('min', '2')
-    expect(slider).toHaveAttribute('max', '30')
+    expect(slider).toHaveAttribute('min', '30')
+    expect(slider).toHaveAttribute('max', '60')
   })
 
   it('renders 스크래치 시작 button (always enabled)', () => {

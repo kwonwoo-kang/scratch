@@ -104,8 +104,8 @@ export default function PaintCanvas({ selectedSize, onScratchStart, onSwitchMode
         <input
           type="range"
           role="slider"
-          min={2}
-          max={30}
+          min={30}
+          max={60}
           value={brushSize}
           onChange={(e) => setBrushSize(Number(e.target.value))}
           className="flex-1"
